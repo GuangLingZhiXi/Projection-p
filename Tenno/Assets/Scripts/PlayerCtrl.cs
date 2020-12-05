@@ -32,19 +32,26 @@ public class PlayerCtrl : MonoBehaviour
         CharacterInput();
         if (stop == true)
         {
-            if (v < 0)
+            if (v < 0)//後退
             {
                 Walk();
                 WalkAnim();
+                Rotate();
             }
             if (v >= 0)
             {
-                PlayerAnimator.SetFloat("Speed", 3f);
+                PlayerAnimator.SetFloat("Speed", 3f);//SPEEDが3になればW押しても動けなくなる
+                Rotate();
             }
-            if (h != 0)
+            if (h != 0)//水平移動
             {
                 PlayerAnimator.SetFloat("Speed", 1f);
                 PlayerAnimator.SetFloat("Direction", h);
+
+                //  commit
+                Walk();
+                WalkAnim();
+                
             }
 
 
@@ -54,17 +61,23 @@ public class PlayerCtrl : MonoBehaviour
         {
             Walk();
             WalkAnim();
-
+            Rotate();
         }
 
 
         Squad();
 
-
+        Rotate();
 
         Jump();
 
     }
+
+     void Rotate()
+    {
+        Playertransform.Rotate(0, Input.GetAxis("Mouse X"), 0);
+    }
+
     void CharacterInput()
     {
         h = Input.GetAxis("Horizontal");
@@ -80,9 +93,9 @@ public class PlayerCtrl : MonoBehaviour
         Vector3 direction = new Vector3(h, 0, v);
         // PlayerRigidbody.MovePosition(direction * speed);
 
-        Playertransform.Translate(direction * speed);
+        Playertransform.Translate(direction * speed,Space.Self);
 
-        Playertransform.Rotate(0, Input.GetAxis("Mouse X"), 0);
+        
 
 
     }
