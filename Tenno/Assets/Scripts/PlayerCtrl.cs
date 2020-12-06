@@ -34,9 +34,7 @@ public class PlayerCtrl : MonoBehaviour
         {
             if (v < 0)//後退
             {
-                Walk();
-                WalkAnim();
-                Rotate();
+                stop = false;
             }
             if (v >= 0)
             {
