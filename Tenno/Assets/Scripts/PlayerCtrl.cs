@@ -47,6 +47,7 @@ public class PlayerCtrl : MonoBehaviour
                 PlayerAnimator.SetFloat("Direction", h);
 
                 //  commit
+                //
                 Walk();
                 WalkAnim();
                 
