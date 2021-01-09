@@ -49,38 +49,9 @@ public class PlayerCtrl : MonoBehaviour
     void Update()
     {
         // Vector3 Position = ;
-        HitRayBody = new Ray(transform.position + PlusPositionA, transform.forward);
 
-        HitRayHead = new Ray(transform.position + PlusPositionB, transform.forward);
-
-
-        if (PlayerStates == States.AtWall || PlayerStates == States.Air)
-        {
-            // 自分の頭の上にある二つのRayでHitRayBが接触してなくて、HitRayAが接触している状態
-            if (Physics.Raycast(HitRayBody, out HitDetectRayBody, 0.3f) && !Physics.Raycast(HitRayHead, out HitDetectRayHead))
-            {
-                PlayerStates = States.Hang;
-                PlayerRigidbody.useGravity = false;
-                //PlayerRigidbody.AddForce(new Vector3(0, 45, 0));
-                PlayerRigidbody.velocity = Vector3.zero;
-                Debug.Log("Hang");
-            }
-        }
-
-        if (PlayerStates == States.Hang)
-        {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                PlayerStates = States.AirDownWall;
-                //PlayerRigidbody.isKinematic = false;
-                 PlayerRigidbody.useGravity = true;
-            }
-        }
-
-        Debug.DrawRay(HitRayBody.origin, HitRayBody.direction, Color.blue);
-        Debug.DrawRay(HitRayHead.origin, HitRayHead.direction, Color.yellow);
-        CharacterInput();
- 
+        PlayerRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
+        RayTest();
 
         Move();
 
@@ -94,6 +65,43 @@ public class PlayerCtrl : MonoBehaviour
 
     }
 
+     void RayTest()
+    {
+        HitRayBody = new Ray(transform.position + PlusPositionA, transform.forward);
+
+        HitRayHead = new Ray(transform.position + PlusPositionB, transform.forward);
+
+
+        //if (PlayerStates == States.AtWall || PlayerStates == States.Air||PlayerStates == States.AirDownWall)
+        //{
+        // 自分の頭の上にある二つのRayでHitRayBが接触してなくて、HitRayAが接触している状態
+        if (Physics.Raycast(HitRayBody, out HitDetectRayBody,0.4f) &&! Physics.Raycast(HitRayHead, out HitDetectRayHead))
+        {
+            PlayerStates = States.Hang;
+            //PlayerRigidbody.useGravity = false;
+            //PlayerRigidbody.AddForce(new Vector3(0, 45, 0));
+            PlayerRigidbody.constraints = RigidbodyConstraints.FreezePosition;
+            Debug.Log("Hang");
+        }
+
+        //}
+
+        if (PlayerStates == States.Hang)
+        {
+            if (Input.GetKeyDown(KeyCode.S))
+            {
+                //PlayerRigidbody.useGravity = true;
+                PlayerStates = States.AirDownWall;
+                PlayerRigidbody.constraints = RigidbodyConstraints.None;
+              
+            }
+        }
+
+        Debug.DrawRay(HitRayBody.origin, HitRayBody.direction, Color.blue);
+        Debug.DrawRay(HitRayHead.origin, HitRayHead.direction, Color.yellow);
+        CharacterInput();
+    }
+
     void Rotate()
     {
         Playertransform.Rotate(0, Input.GetAxis("Mouse X"), 0);
@@ -104,6 +112,15 @@ public class PlayerCtrl : MonoBehaviour
     {
         h = Input.GetAxis("Horizontal");
         v = Input.GetAxis("Vertical");
+        if (PlayerStates == States.AirDownWall || PlayerStates == States.Air)
+        {
+            //h = 0;
+            //v = 0;
+        }
+        //}if(PlayerStates == States.AtWall)
+        //{
+        //    v = 0;
+        //}
         //Debug.Log(h);
     }
 
@@ -133,31 +150,32 @@ public class PlayerCtrl : MonoBehaviour
     void JumpOrClimb()
     {
         
-            if (Input.GetKey(KeyCode.W)&&Input.GetKey(KeyCode.Space))
-            {
-                if (PlayerStates == States.AtWall)
-                {
-                    Debug.Log("Climb");
-                    Vector3 ClimbDirection = new Vector3(0, 1f, 0);
-                    Playertransform.transform.Translate(ClimbDirection);
-                    //PlayerRigidbody.AddForce(ClimbDirection);
-                    PlayerStates = States.AirDownWall;
-                }
+           
+            
 
-            }
+            
         
         if (Input.GetKey(KeyCode.Space))
         {
-            if (PlayerStates == States.Grounded || PlayerStates == States.AtWall)
+            if (PlayerStates == States.Grounded )
             {
                 Debug.Log("Jump");
-                Vector3 JumpDirection = new Vector3(0, 10000f, 0);
+                Vector3 JumpDirection = new Vector3(0, 7000f, 0);
                 PlayerRigidbody.AddForce(JumpDirection);
 
                 PlayerAnimator.SetBool("Jump", true);
                 PlayerStates = States.Air;
             }
+            if (PlayerStates == States.AtWall)
+            {
+                Debug.Log("Climb");
+                Vector3 ClimbDirection = new Vector3(0, 10000f, 0);
+                PlayerRigidbody.AddForce(ClimbDirection);
+                PlayerStates = States.AirDownWall;
+                //PlayerRigidbody.AddForce(ClimbDirection);
+               
 
+            }
         }
 
     }
@@ -211,7 +229,7 @@ public class PlayerCtrl : MonoBehaviour
     {
         if (other.tag == "Wall")
         {
-            Debug.Log("1");
+            //Debug.Log("1");
             if (PlayerStates == States.Grounded)
             {
                 PlayerStates = States.AtWall;
