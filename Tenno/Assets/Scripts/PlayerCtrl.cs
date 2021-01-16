@@ -1,11 +1,13 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+//状态接口类
 
-public class PlayerCtrl : MonoBehaviour
+
+
+
+
+    public class PlayerCtrl : MonoBehaviour
 {
-    public enum States
+    public enum PlayerStandStates
     {
         Grounded,
         AtWall,
@@ -13,13 +15,25 @@ public class PlayerCtrl : MonoBehaviour
         Air,
         Hang
     }
+
+    public enum PlayerMovementStates
+    {
+        Idle,
+        Run,
+        Squad,
+        Jump,
+        Climb,
+        Slide
+    }
+
     public Animator PlayerAnimator;
     private Transform Playertransform;
     private Rigidbody PlayerRigidbody;
     private float h = 0;
     private float v = 0;
     public float speed = 0;
-    public States PlayerStates;
+    public PlayerStandStates PlayerStates;
+    public PlayerMovementStates PlayerMovement;
     public Camera PlayerCamera;
 
     private Ray HitRayBody;
@@ -29,7 +43,8 @@ public class PlayerCtrl : MonoBehaviour
     private RaycastHit HitDetectRayBody;
     private RaycastHit HitDetectRayHead;
     private int PlayerMovementValue;
-        public float Height;
+        public float SquadHeight;
+    private float StandHeight;
     CapsuleCollider PlayerCollider;
 
     //[SerializeField] private bool IsGround;
@@ -45,8 +60,8 @@ public class PlayerCtrl : MonoBehaviour
         PlayerCollider = GetComponent<CapsuleCollider>();
         //speed = 0.1f;
         //IsGround = true;
-        PlayerStates = States.Grounded;
-
+        PlayerStates = PlayerStandStates.Grounded;
+        StandHeight = PlayerCollider.height;
     }
 
     // Update is called once per frame
@@ -59,70 +74,24 @@ public class PlayerCtrl : MonoBehaviour
 
         PlayAnim();       
 
-        JumpOrClimb();
+  
 
         Squad();
 
-        Slide();
+  
    
         PlayerMovements();
-    }
 
-   void Slide()
-    {
-        if(Input.GetKey(KeyCode.LeftShift)){
-            Vector3 direction;
-            switch (PlayerStates)
-            {
-
-                case States.Grounded:
-                    direction = new Vector3(h, 0, v);
-                    Playertransform.Translate(direction * speed * 1.5f, Space.Self);
-                    PlayerAnimator.SetBool("Slide", true);
-                    break;
-                case States.Air:
-                    //転げまわる
-                    break;
-                case States.AirDownWall:
-                    break;
-                case States.AtWall:
-                    break;
-                case States.Hang:
-                    break;
-
-            }
-        }
-       PlayerAnimator.SetBool("Slide", false);
+        CharacterInput();
 
     }
+
+
 
      void Squad()
     {
-        if (Input.GetKey(KeyCode.LeftControl))
-        {
-            
-            switch (PlayerStates)
-            {
-
-                case States.Grounded:
-                    speed = speed * 0.5f;
-                    PlayerCollider.height = Height;
-                    break;
-                case States.Air:
-                    break;
-                case States.AirDownWall:
-                    break;
-                case States.AtWall:
-                    speed = speed * 0.5f;
-                    PlayerCollider.height = Height;
-                    break;
-                case States.Hang:
-                    PlayerStates = States.AirDownWall;
-                    PlayerRigidbody.constraints = RigidbodyConstraints.None;
-                    break;
-
-            }
-        }
+       
+        //
     }
 
     void RayTest()
@@ -138,55 +107,17 @@ public class PlayerCtrl : MonoBehaviour
             ////PlayerRigidbody.AddForce(new Vector3(0, 45, 0));
             //PlayerRigidbody.constraints = RigidbodyConstraints.FreezePosition;
             //Debug.Log("Hang");
-
-            switch (PlayerStates)
+            if(PlayerStates!= PlayerStandStates.Grounded)
             {
-
-                case States.Grounded:
-                    break;
-                case States.Air:
-                    PlayerRigidbody.constraints = RigidbodyConstraints.FreezePosition;
-                    PlayerStates = States.Hang;
-                    Debug.Log("Hang");
-                    break;
-                case States.AirDownWall:
-                    PlayerRigidbody.constraints = RigidbodyConstraints.FreezePosition;
-                    PlayerStates = States.Hang;
-                    Debug.Log("Hang");
-                    break;
-                case States.AtWall:
-                    PlayerRigidbody.constraints = RigidbodyConstraints.FreezePosition;
-                    PlayerStates = States.Hang;
-                    Debug.Log("Hang");
-                    break;
-                case States.Hang:
-                    PlayerRigidbody.constraints = RigidbodyConstraints.FreezePosition;
-                    PlayerStates = States.Hang;
-                    Debug.Log("Hang");
-                    break;
-
+                PlayerRigidbody.constraints = RigidbodyConstraints.FreezePosition;
+                PlayerStates = PlayerStandStates.Hang;
+                Debug.Log("Hang");
             }
-        }
-        
-        //if (PlayerStates == States.AtWall || PlayerStates == States.Air||PlayerStates == States.AirDownWall)
-        //{
-        // 自分の頭の上にある二つのRayでHitRayBが接触してなくて、HitRayAが接触している状態
-        //if (Physics.Raycast(HitRayBody, out HitDetectRayBody) &&! Physics.Raycast(HitRayHead, out HitDetectRayHead))
-        //{
-        //    PlayerStates = States.Hang;
-        //    //PlayerRigidbody.useGravity = false;
-        //    //PlayerRigidbody.AddForce(new Vector3(0, 45, 0));
-        //    PlayerRigidbody.constraints = RigidbodyConstraints.FreezePosition;
-        //    Debug.Log("Hang");
-        //}
-
-        //}
-
-        
-
+          
+        }        
         Debug.DrawRay(HitRayBody.origin, HitRayBody.direction, Color.blue);
         Debug.DrawRay(HitRayHead.origin, HitRayHead.direction, Color.yellow);
-        CharacterInput();
+        
     }
 
   
@@ -200,44 +131,114 @@ public class PlayerCtrl : MonoBehaviour
 
     void PlayerMovements()
     {
-        Playertransform.Rotate(0, Input.GetAxis("Mouse X"), 0);
-        Vector3 direction;
-        switch (PlayerStates)
-        {
-           
-            case States.Grounded:
-                direction = new Vector3(h, 0, v);
-                Playertransform.Translate(direction * speed, Space.Self);
-                break;
-            case States.Air:
-                direction = new Vector3(0, 0, v);
-                Playertransform.Translate(direction * speed, Space.Self);
-                break;
-            case States.AirDownWall:
-                break;
-            case States.AtWall:
-                if (v >0)
-                {
-                    direction = new Vector3(h, 0,0);
-                }else direction = new Vector3(h, 0, v);
+        PlayerCollider.height = StandHeight;
 
-                Playertransform.Translate(direction * speed, Space.Self);
-                break;
-            case States.Hang:
-                direction = new Vector3(h*0.5f, 0, 0);
-                Playertransform.Translate(direction * speed, Space.Self);
-                if (Input.GetKeyDown(KeyCode.W))
-                {
-                    //登る
-                }
-                if (Input.GetKey(KeyCode.S))
-                {
-                    PlayerStates = States.AirDownWall;
-                    PlayerRigidbody.constraints = RigidbodyConstraints.None;
-                }
-                break;
-     
+        Playertransform.Rotate(0, Input.GetAxis("Mouse X"), 0);
+
+        Vector3 direction = new Vector3(h, 0, v);
+        Playertransform.Translate(direction * speed, Space.Self);
+
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+
+            if (PlayerStates == PlayerStandStates.Grounded)
+            {
+                Playertransform.Translate(direction * speed * 1.5f, Space.Self);
+                PlayerAnimator.SetBool("Slide", true);
+            }
+            else if (PlayerStates == PlayerStandStates.Air)
+            {
+
+            }
+
         }
+        PlayerAnimator.SetBool("Slide", false);
+
+        if (Input.GetKey(KeyCode.LeftControl))
+        {
+            speed = speed * 0.5f;
+            PlayerCollider.height = SquadHeight;
+
+        }
+
+        if (Input.GetKey(KeyCode.Space))
+        {
+            Vector3 ClimbDirection;
+            //Vector3 direction;
+            switch (PlayerStates)
+            {
+
+                case PlayerStandStates.Grounded:
+                    Debug.Log("Jump");
+                    Vector3 JumpDirection = new Vector3(0, 7000f, 0);
+                    PlayerRigidbody.AddForce(JumpDirection);
+
+                    PlayerAnimator.SetFloat("Jump", 1);
+                    PlayerStates = PlayerStandStates.Air;
+                    break;
+                case PlayerStandStates.Air:
+
+                    break;
+                case PlayerStandStates.AirDownWall:
+                    //Debug.Log("Climb");
+                    //ClimbDirection = new Vector3(0, 5000f, 0);
+                    //PlayerRigidbody.AddForce(ClimbDirection);
+                    //PlayerStates = States.AirDownWall;
+                    break;
+                case PlayerStandStates.AtWall:
+                    Debug.Log("Climb");
+                    ClimbDirection = new Vector3(0, 10000f, 0);
+                    PlayerRigidbody.AddForce(ClimbDirection);
+                    PlayerStates = PlayerStandStates.AirDownWall;
+                    PlayerAnimator.SetFloat("Jump", 2);
+                    break;
+                case PlayerStandStates.Hang:
+
+                    //登る
+
+
+                    break;
+
+            }
+            
+        //switch (PlayerStates)
+        //{
+           
+        //    case PlayerStandStates.Grounded:
+        //        //direction = new Vector3(h, 0, v);
+        //        //Playertransform.Translate(direction * speed, Space.Self);
+        //        Move();
+        //        Jump();
+
+        //        break;
+        //    case PlayerStandStates.Air:
+        //        //direction = new Vector3(0, 0, v);
+        //        //Playertransform.Translate(direction * speed, Space.Self);
+
+        //        break;
+        //    case PlayerStandStates.AtWall:
+        //        if (v >0)
+        //        {
+        //            direction = new Vector3(h, 0,0);
+        //        }else direction = new Vector3(h, 0, v);
+
+        //        Playertransform.Translate(direction * speed, Space.Self);
+        //        break;
+        //    case PlayerStandStates.Hang:
+        //        direction = new Vector3(h*0.5f, 0, 0);
+        //        Playertransform.Translate(direction * speed, Space.Self);
+        //        if (Input.GetKeyDown(KeyCode.W))
+        //        {
+        //            //登る
+        //        }
+        //        if (Input.GetKey(KeyCode.S))
+        //        {
+        //            PlayerStates = PlayerStandStates.AirDownWall;
+        //            PlayerRigidbody.constraints = RigidbodyConstraints.None;
+        //        }
+        //        break;
+     
+        //}
        
         // PlayerRigidbody.MovePosition(direction * speed);
 
@@ -251,56 +252,7 @@ public class PlayerCtrl : MonoBehaviour
 
    
 
-    void JumpOrClimb()
-    {
-        
-           
-            
 
-            
-        
-        if (Input.GetKey(KeyCode.Space))
-        {
-            Vector3 ClimbDirection;
-            //Vector3 direction;
-            switch (PlayerStates)
-            {
-
-                case States.Grounded:
-                    Debug.Log("Jump");
-                    Vector3 JumpDirection = new Vector3(0, 7000f, 0);
-                    PlayerRigidbody.AddForce(JumpDirection);
-
-                    PlayerAnimator.SetFloat("Jump",1);
-                    PlayerStates = States.Air;
-                    break;
-                case States.Air:
-                    
-                    break;
-                case States.AirDownWall:
-                    //Debug.Log("Climb");
-                    //ClimbDirection = new Vector3(0, 5000f, 0);
-                    //PlayerRigidbody.AddForce(ClimbDirection);
-                    //PlayerStates = States.AirDownWall;
-                    break;
-                case States.AtWall:
-                    Debug.Log("Climb");
-                     ClimbDirection = new Vector3(0, 10000f, 0);
-                    PlayerRigidbody.AddForce(ClimbDirection);
-                    PlayerStates = States.AirDownWall;
-                    PlayerAnimator.SetFloat("Jump", 2);
-                    break;
-                case States.Hang:
-
-                    //登る
-                    
-
-                    break;
-
-            }
-
-           
-        }
 
     }
     void PlayAnim()
@@ -310,7 +262,7 @@ public class PlayerCtrl : MonoBehaviour
             switch (PlayerStates)
             {
 
-                case States.Grounded:
+                case PlayerStandStates.Grounded:
                     if (v != 0)
                     {
                         PlayerAnimator.SetFloat("Speed", v);
@@ -326,13 +278,13 @@ public class PlayerCtrl : MonoBehaviour
                         PlayerAnimator.SetFloat("Direction", 0);
                     }
                     break;
-                case States.Air:
+                case PlayerStandStates.Air:
    
                     break;
-                case States.AirDownWall:
+                case PlayerStandStates.AirDownWall:
                     
                     break;
-                case States.AtWall:
+                case PlayerStandStates.AtWall:
                     if (v >= 0)
                     {
                         PlayerAnimator.SetFloat("Speed", 3);
@@ -343,7 +295,7 @@ public class PlayerCtrl : MonoBehaviour
                         PlayerAnimator.SetFloat("Direction", h);
                     }
                     break;
-                case States.Hang:
+                case PlayerStandStates.Hang:
                     PlayerAnimator.SetFloat("Jump", 0);
                     break;
 
@@ -362,18 +314,18 @@ public class PlayerCtrl : MonoBehaviour
             switch (PlayerStates)
             {
 
-                case States.Grounded:       
+                case PlayerStandStates.Grounded:       
                     break;
-                case States.Air:
-                    PlayerStates = States.Grounded;
+                case PlayerStandStates.Air:
+                    PlayerStates = PlayerStandStates.Grounded;
                     break;
-                case States.AirDownWall:
-                    PlayerStates = States.AtWall;
+                case PlayerStandStates.AirDownWall:
+                    PlayerStates = PlayerStandStates.AtWall;
                     break;
-                case States.AtWall:
+                case PlayerStandStates.AtWall:
                     break;
-                case States.Hang:
-                    PlayerStates = States.Grounded;
+                case PlayerStandStates.Hang:
+                    PlayerStates = PlayerStandStates.Grounded;
                     break;
 
             }
@@ -390,19 +342,19 @@ public class PlayerCtrl : MonoBehaviour
             switch (PlayerStates)
             {
 
-                case States.Grounded:
-                    PlayerStates = States.AtWall;
+                case PlayerStandStates.Grounded:
+                    PlayerStates = PlayerStandStates.AtWall;
                     break;
-                case States.Air:
-                    PlayerStates = States.AirDownWall;
+                case PlayerStandStates.Air:
+                    PlayerStates = PlayerStandStates.AirDownWall;
                     break;
-                case States.AirDownWall:
-                    PlayerStates = States.AirDownWall;
+                case PlayerStandStates.AirDownWall:
+                    PlayerStates = PlayerStandStates.AirDownWall;
                     break;
-                case States.AtWall:
+                case PlayerStandStates.AtWall:
                     break;
-                case States.Hang:
-                    PlayerStates = States.AtWall;
+                case PlayerStandStates.Hang:
+                    PlayerStates = PlayerStandStates.AtWall;
                     break;
 
             }
@@ -420,20 +372,20 @@ public class PlayerCtrl : MonoBehaviour
             switch (PlayerStates)
             {
 
-                case States.Grounded:
-                    PlayerStates = States.Grounded;
+                case PlayerStandStates.Grounded:
+                    PlayerStates = PlayerStandStates.Grounded;
                     break;
-                case States.Air:
-                    PlayerStates = States.Air;
+                case PlayerStandStates.Air:
+                    PlayerStates = PlayerStandStates.Air;
                     break;
-                case States.AirDownWall:
-                    PlayerStates = States.AirDownWall;
+                case PlayerStandStates.AirDownWall:
+                    PlayerStates = PlayerStandStates.AirDownWall;
                     break;
-                case States.AtWall:
-                    PlayerStates = States.Grounded;
+                case PlayerStandStates.AtWall:
+                    PlayerStates = PlayerStandStates.Grounded;
                     break;
-                case States.Hang:
-                    PlayerStates = States.Hang;
+                case PlayerStandStates.Hang:
+                    PlayerStates = PlayerStandStates.Hang;
                     break;
 
             }
@@ -444,3 +396,4 @@ public class PlayerCtrl : MonoBehaviour
 
 
 }
+
