@@ -56,7 +56,6 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\Scripts\CameraCtrl.cs" />
-     <Compile Include="Assets\Scripts\PLayerMovementCtrl.cs" />
      <Compile Include="Assets\Scripts\PlayerCtrl.cs" />
      <None Include="Assets\Models\unity-chan!\Unity-chan! Model\Art\UnityChanShader\Shader\Unitychan_chara_fuku.shader" />
      <None Include="Assets\Models\unity-chan!\Unity-chan! Model\Art\UnityChanShader\Shader\Unitychan_chara_akarami_blend.shader" />
