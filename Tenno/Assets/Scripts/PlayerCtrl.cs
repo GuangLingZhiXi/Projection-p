@@ -43,7 +43,6 @@ public class PlayerCtrl : MonoBehaviour
     private float AirMoveSpeed;
     public float SquadHeight;
     public float StandHeight;
-    private float Stamina;
 
     private Vector3 ParkourStartPosition;
     private Vector3 ParkourEndPosition;
@@ -53,7 +52,7 @@ public class PlayerCtrl : MonoBehaviour
     void Start()
     { 
         //PlayerAnimator.SetBool();
-        PlayerAnimator = GetComponent<Animator>();
+        //PlayerAnimator = GetComponent<Animator>();
         Playertransform = GameObject.Find("Player").GetComponent<Transform>();
         PlayerRigidbody = GameObject.Find("Player").GetComponent<Rigidbody>();
         PlayerCollider = GetComponent<CapsuleCollider>();
@@ -66,7 +65,6 @@ public class PlayerCtrl : MonoBehaviour
         AirMoveSpeed = 6.5f;
         StandHeight = PlayerCollider.height;
         ParkourTime = 0;
-        Stamina = 1;
 
     }
 
@@ -74,74 +72,81 @@ public class PlayerCtrl : MonoBehaviour
     void Update()
     {
 
-        GroundCheck();
+        PlayerRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
 
-        Rotate();
-
-        CharacterInput();
-
-        Run();
-
-        Squad();
-
-        NormalJump();
-
-        
-        if (ValutDetect.CollisonHappen && !HangDetect.CollisonHappen && !Climb && !Vlaut && IsInGround && ParkourTime == 0 && Input.GetKeyDown(KeyCode.Space) && v > 0)
+        if (PlayerAnimator)
         {
 
-            Vlaut = true;
+            CharacterInput();
 
-        }
-        if (HangDetect.CollisonHappen&& IsInGround&& !Hang && !Climb&& !Vlaut && Input.GetKeyDown(KeyCode.Space))
-        {
+            Run();
 
-            Hang = true;
+            NormalJump();
 
-        }
-        if (ClimbDetect.CollisonHappen && !HangDetect.CollisonHappen && !Vlaut && ParkourTime == 0 && v > 0)
-        {
-            if (Input.GetKeyDown(KeyCode.Space))
+            Squad();
+
+            Rotate();
+
+            GroundCheck();
+
+            if (ValutDetect.CollisonHappen && !HangDetect.CollisonHappen && !Climb && !Vlaut && IsInGround && ParkourTime == 0 && Input.GetKeyDown(KeyCode.Space) && v > 0)
             {
 
-                Climb = true;
+                Vlaut = true;
 
             }
-        }
-        if (ValutDetect.CollisonHappen&&ClimbDetect.CollisonHappen && !IsInGround && !Hang && ParkourTime == 0 && Input.GetKeyDown(KeyCode.S))
-        {
-
-            PlayerRigidbody.constraints = RigidbodyConstraints.None;
-            PlayerRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
-            PlayerRigidbody.useGravity = true;
-
-        }
-        if(!IsInGround&& !RollDetect.CollisonHappen)
-        {
-
-            //Debug.Log("CanRoll");
-            if (IsInGround&&RollDetect.CollisonHappen && Input.GetKeyDown(KeyCode.C))
+            if (HangDetect.CollisonHappen && IsInGround && !Hang && !Climb && !Vlaut && Input.GetKeyDown(KeyCode.Space))
             {
 
-                Debug.Log("Roll");
+                Hang = true;
+
+            }
+            if (ClimbDetect.CollisonHappen && !HangDetect.CollisonHappen && !Vlaut && ParkourTime == 0 && v > 0)
+            {
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+
+                    Climb = true;
+
+                }
+            }
+            if (ValutDetect.CollisonHappen && ClimbDetect.CollisonHappen && !IsInGround && !Hang && ParkourTime == 0 && Input.GetKeyDown(KeyCode.S))
+            {
+
+                PlayerRigidbody.constraints = RigidbodyConstraints.None;
+                PlayerRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
+                PlayerAnimator.SetBool("Climb", false);
+                PlayerRigidbody.useGravity = true;
+
+            }
+            if (!IsInGround && !RollDetect.CollisonHappen)
+            {
+
+                //Debug.Log("CanRoll");
+                if (IsInGround && RollDetect.CollisonHappen && Input.GetKeyDown(KeyCode.C))
+                {
+
+                    Debug.Log("Roll");
+
+                }
+
+            }
+            if (!Climb && !Hang && !Vlaut && IsInGround && !Slide && Input.GetKeyDown(KeyCode.LeftShift) && v > 0)
+            {
+
+                Sliding();
+
+            }
+            if (Input.GetKeyUp(KeyCode.LeftShift))
+            {
+
+                StandUp();
 
             }
 
-        }
-        if (!Climb && !Hang && !Vlaut && IsInGround && !Slide && Input.GetKeyDown(KeyCode.LeftShift) && v > 0)
-        {
-
-            Sliding();
+            Parkour();
 
         }
-        if (Input.GetKeyUp(KeyCode.LeftShift))
-        {
-
-            StandUp();
-
-        }
-
-        Parkour();
 
     }
 
@@ -165,6 +170,7 @@ public class PlayerCtrl : MonoBehaviour
 
     private void Parkour()
     {
+
         if (CameraAnimator)
         {
 
@@ -189,10 +195,14 @@ public class PlayerCtrl : MonoBehaviour
                 ParkourCostTime = 0.4f;
                 ParkourStartPosition = transform.position;
                 ParkourEndPosition = HangEndPosition.position;
+                PlayerAnimator.SetBool("Hang", true);
                 if (!HangLimitDetect.CollisonHappen)
                 {
                     PlayerRigidbody.constraints = RigidbodyConstraints.FreezePosition;
                     PlayerRigidbody.useGravity = false;
+                    PlayerAnimator.SetBool("Jump", false);  
+                    PlayerAnimator.SetBool("Climb", true);
+
                 }
 
 
@@ -209,6 +219,7 @@ public class PlayerCtrl : MonoBehaviour
                 PlayerRigidbody.constraints = RigidbodyConstraints.None;
                 PlayerRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
                 PlayerRigidbody.useGravity = true;
+                PlayerAnimator.SetBool("Climb", false);
                 CameraAnimator.CrossFade("Climb", 0.1f);
 
             }
@@ -219,6 +230,7 @@ public class PlayerCtrl : MonoBehaviour
 
             ParkourTime += Time.deltaTime / ParkourCostTime;
             transform.position = Vector3.Lerp(ParkourStartPosition, ParkourEndPosition, ParkourTime);
+            PlayerAnimator.SetBool("Jump", false);
 
             if (ParkourTime >= 1f)
             {
@@ -226,6 +238,8 @@ public class PlayerCtrl : MonoBehaviour
                 CanParkour = false;
                 ParkourTime = 0f;
                 PlayerRigidbody.isKinematic = false;
+               // PlayerAnimator.SetBool("Climb", false);
+                PlayerAnimator.SetBool("Hang", false);
 
             }
 
@@ -245,6 +259,7 @@ public class PlayerCtrl : MonoBehaviour
                 Vector3 JumpDirection = new Vector3(0, 150f, 0);
                 PlayerRigidbody.velocity = new Vector3(PlayerRigidbody.velocity.x, 0f, PlayerRigidbody.velocity.z);
                 PlayerRigidbody.AddForce(JumpDirection, ForceMode.Impulse);
+                //PlayerAnimator.SetBool("Jump", true);
 
             }
 
@@ -289,6 +304,8 @@ public class PlayerCtrl : MonoBehaviour
 
             //通过给刚体的 指定的方向 施加速度，得以控制角色运动
             PlayerRigidbody.MovePosition(PlayerRigidbody.position + MainDirection * MoveSpeed * Time.deltaTime);
+            PlayerAnimator.SetFloat("v", v);
+            PlayerAnimator.SetFloat("h", h);
 
         }
         else if (!IsInGround)
@@ -326,12 +343,14 @@ public class PlayerCtrl : MonoBehaviour
             {
 
                 IsInGround = true;
+                PlayerAnimator.SetBool("Jump", false);
 
             }
             else
             {
 
                 IsInGround = false;
+                PlayerAnimator.SetBool("Jump", true);
 
             }
 

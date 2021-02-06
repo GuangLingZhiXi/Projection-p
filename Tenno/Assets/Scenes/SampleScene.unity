@@ -1538,6 +1538,12 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &1946362077 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 8329841015593930107, guid: 7338e142a10a4ed479d2940450409e34,
+    type: 3}
+  m_PrefabInstance: {fileID: 8329841014771254827}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2020734785 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8329841016129702595, guid: 7338e142a10a4ed479d2940450409e34,
@@ -1682,6 +1688,11 @@ PrefabInstance:
       propertyPath: RollDetect
       value: 
       objectReference: {fileID: 33879536}
+    - target: {fileID: 8329841015369574589, guid: 7338e142a10a4ed479d2940450409e34,
+        type: 3}
+      propertyPath: PlayerAnimator
+      value: 
+      objectReference: {fileID: 1946362077}
     - target: {fileID: 8329841015584350875, guid: 7338e142a10a4ed479d2940450409e34,
         type: 3}
       propertyPath: m_LocalPosition.z
@@ -1751,12 +1762,17 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 9100000, guid: 8d5a0e0d58f4e4176a844a1a03976c19, type: 2}
     - target: {fileID: 8329841015593930107, guid: 7338e142a10a4ed479d2940450409e34,
         type: 3}
       propertyPath: m_Avatar
       value: 
       objectReference: {fileID: 9000000, guid: 8f0565f23a2b58541a475bd3c1393052, type: 3}
+    - target: {fileID: 8329841016067256700, guid: 7338e142a10a4ed479d2940450409e34,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.26
+      objectReference: {fileID: 0}
     - target: {fileID: 8329841016193590696, guid: 7338e142a10a4ed479d2940450409e34,
         type: 3}
       propertyPath: m_LocalPosition.y
