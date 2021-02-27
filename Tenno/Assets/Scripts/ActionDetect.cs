@@ -14,6 +14,8 @@ public class ActionDetect : MonoBehaviour
 
     void OnTriggerStay(Collider col)
     {
+
+        //触发器检测：未发生碰撞且标签为墙壁则返回检测物体给检测器
         if (!CollisonHappen)
         {
             if (col.tag == "Wall")
@@ -32,6 +34,7 @@ public class ActionDetect : MonoBehaviour
 
         }
 
+        //否则仅是否碰撞为真
         if (!CollisonHappen)
         {
 
@@ -47,9 +50,11 @@ public class ActionDetect : MonoBehaviour
 
     }
 
+
     private void Update()
     {
 
+        //触发器判断是否发生碰撞
         if (DetectedObject == null || !CorrectCllider.enabled)
         {
 
@@ -69,9 +74,11 @@ public class ActionDetect : MonoBehaviour
 
     }
 
+
     void OnTriggerExit(Collider col)
     {
 
+        //触发器离开碰撞体
         if (col == CorrectCllider)
         {
 

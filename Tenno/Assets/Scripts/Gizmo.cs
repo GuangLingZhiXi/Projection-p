@@ -19,7 +19,8 @@ public class Gizmo : MonoBehaviour
     }
     void OnDrawGizmos()
     {
-
+        
+        //标注移动点位置
         Gizmos.color = Color.yellow;
         Gizmos.DrawSphere(transform.position, 0.05f);
 

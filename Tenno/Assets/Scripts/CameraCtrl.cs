@@ -42,7 +42,7 @@ public class CameraCtrl : MonoBehaviour
         RotationY += Input.GetAxis("Mouse Y");
         RotationY = Mathf.Clamp(RotationY, -65f, 90f);
         transform.localEulerAngles = new Vector3(-RotationY, Body.localEulerAngles.y, 0);
-
+        //transform.Rotate(Input.GetAxis("Mouse Y"),0,0);
     }
 
 }
