@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 //状态接口类
 
 
@@ -18,6 +19,8 @@ public class PlayerCtrl : MonoBehaviour
     private Rigidbody PlayerRigidbody;
     private CapsuleCollider PlayerCollider;
     public Camera PlayerCamera;
+    public CharacterController controller;
+    public Slider WeaponSlider;
 
     //位移类
     public Transform ValutEndPosition;
@@ -31,11 +34,13 @@ public class PlayerCtrl : MonoBehaviour
     public ActionDetect ClimbDetect;
     public ActionDetect HangLimitDetect;
     public ActionDetect GroundDetect;
+    public ActionDetect StopDetect;
 
     //判断变量
     private bool IsInGround;
     private bool CanParkour;
     private bool Vlaut;
+    private int HangNum;
     private bool Hang;
     private bool Climb;
     private bool Slide;
@@ -56,9 +61,14 @@ public class PlayerCtrl : MonoBehaviour
     public float StandHeight;
     private float SafeHeight;
     private float LandSpeed;
+    public float gravity = 20.0F;
+    private float MaxWeaponValue;
+    private float WeaponValue;
+    private float ParkourValue;
 
     private Vector3 ParkourStartPosition;
     private Vector3 ParkourEndPosition;
+    private Vector3 moveDirection = Vector3.zero;
 
 
     // Start is called before the first frame update
@@ -68,6 +78,7 @@ public class PlayerCtrl : MonoBehaviour
         Playertransform = GameObject.Find("Player").GetComponent<Transform>();
         PlayerRigidbody = GameObject.Find("Player").GetComponent<Rigidbody>();
         PlayerCollider = GetComponent<CapsuleCollider>();
+        //CharacterController controller = GameObject.Find("Player").GetComponent<CharacterController>();
 
         CanParkour = false;
         Vlaut = false;
@@ -76,43 +87,52 @@ public class PlayerCtrl : MonoBehaviour
         Roll = false;
         HardLand = false;
         CanJump = false;
-        flag = true;
+        flag = false;
 
         MoveSpeed = 5;
         AirMoveSpeed = 6.5f;
         StandHeight = PlayerCollider.height;
         ParkourTime = 0;
+        HangNum = 0;
+        WeaponValue = 0;
+        MaxWeaponValue = 100;
+        ParkourValue = 0;
 
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
-        PlayerAnimator.SetFloat("LandSpeed", LandSpeed);
+        //Debug.Log(HangNum);
 
-        LandSpeed = PlayerRigidbody.velocity.magnitude;
-
-        Ray FootRay = new Ray(GroundDetect.transform.position, -GroundDetect.transform.up);
-        RaycastHit FootRayHit;
-        
-        if (Physics.Raycast(FootRay,out FootRayHit))
+        if (!flag)
         {
-            
-                //Debug.Log(FootRayHit.distance);
-            //Debug.Log("碰撞对象: " + FootRayHit.collider.name);
-            Debug.DrawLine(FootRay.origin, FootRayHit.point, Color.red);
-       
-        }
-        
 
-        //固定刚体旋转
-        PlayerRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
+            PlayerAnimator.SetFloat("LandSpeed", LandSpeed);
 
-        if (PlayerAnimator)
-        {
-            //もしhard landnding だったら retun
-            if (!HardLand)
+            LandSpeed = PlayerRigidbody.velocity.y;
+
+            Ray FootRay = new Ray(GroundDetect.transform.position, -GroundDetect.transform.up);
+            RaycastHit FootRayHit;
+
+            //if (Physics.Raycast(FootRay, out FootRayHit))
+            //{
+
+            //    Debug.Log(FootRayHit.distance);
+            //    Debug.DrawLine(FootRay.origin, FootRayHit.point, Color.red);
+            //    //Debug.Log("碰撞对象: " + FootRayHit.collider.name);
+
+
+            //}
+
+
+            //固定刚体旋转
+            PlayerRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
+
+            if (PlayerAnimator)
             {
+                //もしhard landnding だったら retun
+
                 //基础运动
                 CharacterInput();
 
@@ -126,45 +146,48 @@ public class PlayerCtrl : MonoBehaviour
 
                 GroundCheck();
 
+                StandUp();
+
                 //各类跑酷判定
                 //翻越判定：翻越触发&&悬挂未触发&&未攀爬&&未翻越&&触地&&跑酷时间结束&&按下按键&&向前位移
-                if (ValutDetect.CollisonHappen && !HangLimitDetect.CollisonHappen && !HangDetect.CollisonHappen && !Climb && !Vlaut && IsInGround && !HangIdle && ParkourTime == 0 && Input.GetKeyDown(KeyCode.Space) && v > 0)
+                if (ValutDetect.CollisonHappen && !HangLimitDetect.CollisonHappen && !HangDetect.CollisonHappen && !Climb && !Vlaut && IsInGround && !HangIdle && ParkourTime == 0 && Input.GetKey(KeyCode.Space) && Input.GetKey(KeyCode.W))
                 {
 
                     Vlaut = true;
 
                 }
                 //悬挂判定：悬挂触发&&触地&&未悬挂&&未攀爬&&未翻越&&按下按键
-                if (HangDetect.CollisonHappen && IsInGround && !Hang && !Climb && !Vlaut && Input.GetKeyDown(KeyCode.Space))
+                if (HangDetect.CollisonHappen && HangNum == 1 && !Hang && !Climb && !Vlaut && Input.GetKeyDown(KeyCode.Space))
                 {
+
 
                     Hang = true;
 
                 }
                 //攀爬判定：攀爬触发&&悬挂未触发&&未翻越&&跑酷时间结束&&向前位移
-                if (ClimbDetect.CollisonHappen && !HangLimitDetect.CollisonHappen && !HangDetect.CollisonHappen && !Vlaut && ParkourTime == 0 && Input.GetKeyDown(KeyCode.Space) && v > 0)
-                {
+                if (ClimbDetect.CollisonHappen && !HangLimitDetect.CollisonHappen && !HangDetect.CollisonHappen && !Vlaut && ParkourTime == 0 && (Input.GetKey(KeyCode.Space) || !IsInGround && Input.GetKey(KeyCode.W)))
+                    {
 
-                    Climb = true;
+                        Climb = true;
 
-                }
-                //下落判定：翻越触发&&攀爬触发&&未触地&&未悬挂&&跑酷时间结束&&按下按键
-                if (ValutDetect.CollisonHappen && ClimbDetect.CollisonHappen && !IsInGround && !Hang && ParkourTime == 0 && Input.GetKeyDown(KeyCode.S))
-                {
+                    }
+                    //下落判定：翻越触发&&攀爬触发&&未触地&&未悬挂&&跑酷时间结束&&按下按键
+                    if (HangIdle = true && Input.GetKeyDown(KeyCode.S)|| !ClimbDetect.CollisonHappen)
+                    {
 
-                    //解除悬挂
-                    PlayerRigidbody.constraints = RigidbodyConstraints.None;
-                    PlayerRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
-                    PlayerAnimator.SetBool("Hang Idle", false);
-                    PlayerRigidbody.useGravity = true;
-                    HangIdle = false;
+                        //解除悬挂
+                        PlayerRigidbody.constraints = RigidbodyConstraints.None;
+                        PlayerRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
+                        PlayerAnimator.SetBool("Hang Idle", false);
+                        PlayerRigidbody.useGravity = true;
+                        HangIdle = false;
 
 
-                }
-                //翻滚判定：未触地&&翻滚未触发
-                if (PlayerAnimator.GetFloat("LandSpeed") >= 5)
-                {
-                    if (FootRayHit.distance < 0.1f)
+                    }
+                    //翻滚判定：未触地&&翻滚未触发
+                    if (PlayerAnimator.GetFloat("LandSpeed") <=-7&& Physics.Raycast(FootRay, out FootRayHit))
+                    {
+                        if(FootRayHit.distance < 0.1f)
                     {
                         if (Input.GetKey(KeyCode.LeftControl))
                         {
@@ -175,47 +198,54 @@ public class PlayerCtrl : MonoBehaviour
                             HardLand = true;
                             //PlayerAnimator.SetBool("Fall", false);
                             PlayerAnimator.SetBool("HardLand", true);
+                            CameraAnimator.CrossFade("LandingHard", 2f);
                             PlayerRigidbody.constraints = RigidbodyConstraints.FreezeAll;
-                            MoveSpeed = 0;
-                            AirMoveSpeed = 0;
-                            if (flag)
+                            //MoveSpeed = 0;
+                            //AirMoveSpeed = 0;
+                            if (!flag)
                             {
+
+                                flag = true;
                                 StartCoroutine(Landing());
-                                flag = false;
+
                             }
 
+
+
+
                         }
+                    }
+                            
+                        //Roll = true;
+
 
 
                     }
-                    //Roll = true;
 
+                    //滑铲判定：未攀爬&&未悬挂&&触地&&未滑铲&&按下按键&&向前位移
+                    if (!Climb && !Hang && !Vlaut && IsInGround && !Slide && Input.GetKeyDown(KeyCode.LeftShift) &&Input.GetKey(KeyCode.W))
+                    {
 
+                        Sliding();
 
-                }
+                    }
+                    //站立
+                    
 
-                //滑铲判定：未攀爬&&未悬挂&&触地&&未滑铲&&按下按键&&向前位移
-                if (!Climb && !Hang && !Vlaut && IsInGround && !Slide && Input.GetKeyDown(KeyCode.LeftShift) && v > 0)
-                {
+                   
 
-                    Sliding();
+                    
 
-                }
-                //站立
-                if (Input.GetKeyUp(KeyCode.LeftShift))
-                {
+                    //跑酷动作
+                    Parkour();
 
-                    StandUp();
+                
 
-                }
-
-                //跑酷动作
-                Parkour();
 
             }
 
-
         }
+        
 
 
 
@@ -225,15 +255,15 @@ public class PlayerCtrl : MonoBehaviour
     IEnumerator Landing()
     {
         //PlayerAnimator.SetBool("CanJump", false);
-        yield return new WaitForSeconds(3f);
-        Debug.Log("Stop");
+        yield return new WaitForSeconds(2f);
+        //Debug.Log("Stop");
         HardLand = false;
         PlayerAnimator.SetBool("HardLand", false);
         PlayerRigidbody.constraints = RigidbodyConstraints.None;
        PlayerRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
-        MoveSpeed = 5;
-        AirMoveSpeed = 6.5f;
-        flag = true;
+        //MoveSpeed = 5;
+        //AirMoveSpeed = 6.5f;
+        flag = false;
 
     }
 
@@ -259,12 +289,14 @@ public class PlayerCtrl : MonoBehaviour
                 ParkourEndPosition = ValutEndPosition.position;
                 CameraAnimator.CrossFade("Vault", 0.1f);
                 PlayerAnimator.SetBool("Vault", true);
+                ParkourValue = 20;
                // PlayerAnimator.SetFloat("LandSpeed", 0);
 
             }
             if (Hang)
             {
 
+                HangNum = 0;
                 //Debug.Log("Hang");
                 Hang = false;
                 PlayerRigidbody.isKinematic = true;
@@ -308,6 +340,7 @@ public class PlayerCtrl : MonoBehaviour
                 CameraAnimator.CrossFade("Climb", 0.1f);
                 //PlayerAnimator.SetFloat("LandSpeed", 0);
                 HangIdle = false;
+                ParkourValue = 30;
 
             }
             if (Roll)
@@ -321,6 +354,7 @@ public class PlayerCtrl : MonoBehaviour
                 ParkourEndPosition = RollEndPosition.position;
                 PlayerAnimator.SetBool("Roll", true);
                 CameraAnimator.CrossFade("Roll", 0.1f);
+                ParkourValue = 40;
                 //PlayerAnimator.SetFloat("LandSpeed", 0);
 
             }
@@ -338,6 +372,7 @@ public class PlayerCtrl : MonoBehaviour
             if (ParkourTime >= 1f)
             {
 
+                HangNum = 0;
                 CanParkour = false;
                 ParkourTime = 0f;
                 PlayerRigidbody.isKinematic = false;
@@ -348,6 +383,7 @@ public class PlayerCtrl : MonoBehaviour
                 PlayerAnimator.SetBool("Roll", false);
                 PlayerAnimator.SetBool("CanJump", false);
                 StartCoroutine(Landing());
+                ParkourValue = 0;
                 //PlayerAnimator.SetBool("Hang Idle", false);
 
             }
@@ -360,7 +396,7 @@ public class PlayerCtrl : MonoBehaviour
     private void NormalJump()
     {
 
-        if (IsInGround && !Slide && !CanParkour)
+        if (IsInGround && !Slide && !CanParkour&& !PlayerAnimator.GetBool("Crouch"))
         {
 
             if (Input.GetKeyDown(KeyCode.Space))
@@ -380,15 +416,22 @@ public class PlayerCtrl : MonoBehaviour
     private void StandUp()
     {
 
-        Slide = false;
-        PlayerCollider.height = StandHeight;
-        Vector3 center = PlayerCollider.center;
-        center.y = 0.7f;
-        PlayerCollider.center = center;
-        MoveSpeed = 5f;
-        PlayerAnimator.SetBool("Slide", false);
-        PlayerAnimator.SetBool("Crouch", false);
-        CameraAnimator.SetBool("Crouch", false);
+        if (Input.GetKeyUp(KeyCode.LeftShift))
+        {
+
+            Debug.Log("StandUp");
+            Slide = false;
+            PlayerCollider.height = StandHeight;
+            Vector3 center = PlayerCollider.center;
+            center.y = 0.7f;
+            PlayerCollider.center = center;
+            MoveSpeed = 5f;
+            PlayerAnimator.SetBool("Slide", false);
+            PlayerAnimator.SetBool("Crouch", false);
+            CameraAnimator.SetBool("Crouch", false);
+
+        }
+
 
     }
 
@@ -402,22 +445,19 @@ public class PlayerCtrl : MonoBehaviour
             if (Input.GetKey(KeyCode.LeftShift))
             {
 
+                Debug.Log("Squad");
                 MoveSpeed = 2.5f;
                 Vector3 center = PlayerCollider.center;
                 center.y = 0.25f;
                 PlayerCollider.center = center;
                 PlayerCollider.height = SquadHeight;
+                //controller.height = 0.5f;
                 PlayerAnimator.SetBool("Crouch", true);
                 CameraAnimator.SetBool("Crouch", true);
                 //PlayerCamera.transform.Translate(0, 0, 1);
 
             }
-            else if (Input.GetKeyUp(KeyCode.LeftControl))
-            {
-
-                StandUp();
-
-            }
+ 
 
         }
 
@@ -428,6 +468,7 @@ public class PlayerCtrl : MonoBehaviour
     private void Sliding()
     {
 
+        Debug.Log("Sliding");
         Slide = true;
         PlayerCollider.height = SquadHeight;
         Vector3 center = PlayerCollider.center;
@@ -435,6 +476,7 @@ public class PlayerCtrl : MonoBehaviour
         PlayerCollider.center = center;
         PlayerRigidbody.AddForce(transform.forward * 6, ForceMode.VelocityChange);
         PlayerAnimator.SetBool("Slide", true);
+        CameraAnimator.SetBool("Crouch", true);
 
     }
 
@@ -443,49 +485,105 @@ public class PlayerCtrl : MonoBehaviour
     private void Run()
     {
 
-       
 
-            h = Input.GetAxis("Horizontal");
-            v = Input.GetAxis("Vertical");
+        Vector3 WordDirectionForward = transform.TransformDirection(Vector3.forward);
+        Vector3 ForwardDirection = v * WordDirectionForward;//物体前后移动的方向
+                                                            //求出相对于物体右方方向的世界方向
+        Vector3 WorldDirectionRight = transform.TransformDirection(Vector3.right);
+        Vector3 RightDirection = h * WorldDirectionRight;//物体左右移动的方向
 
-            Vector3 WordDirectionForward = transform.TransformDirection(Vector3.forward);
-            Vector3 ForwardDirection = v * WordDirectionForward;//物体前后移动的方向
-                                                                //求出相对于物体右方方向的世界方向
-            Vector3 WorldDirectionRight = transform.TransformDirection(Vector3.right);
-            Vector3 RightDirection = h * WorldDirectionRight;//物体左右移动的方向
+        //再将前后左右需要移动的方向都加起来 得出 最终要移动的方向
+        Vector3 MainDirection = ForwardDirection + RightDirection;
 
-            //再将前后左右需要移动的方向都加起来 得出 最终要移动的方向
-            Vector3 MainDirection = ForwardDirection + RightDirection;
+        if (IsInGround)
+        {
 
-            if (IsInGround&& !HardLand)
-            {
+            //通过给刚体的 指定的方向 施加速度，得以控制角色运动
+            PlayerRigidbody.MovePosition(PlayerRigidbody.position + MainDirection * MoveSpeed * Time.deltaTime);
+            
+            PlayerAnimator.SetFloat("v", v);
+            PlayerAnimator.SetFloat("h", h);
 
-                //通过给刚体的 指定的方向 施加速度，得以控制角色运动
-                PlayerRigidbody.MovePosition(PlayerRigidbody.position + MainDirection * MoveSpeed * Time.deltaTime);
+        }
+        else if (!IsInGround)
+        {
 
-                PlayerAnimator.SetFloat("v", v);
-                PlayerAnimator.SetFloat("h", h);
+            //通过给刚体的 指定的方向 施加速度，得以控制角色运动
+            PlayerRigidbody.MovePosition(PlayerRigidbody.position + MainDirection * AirMoveSpeed * Time.deltaTime);
 
-            }
-            else if (!IsInGround && !HardLand)
-            {
+        }
 
-                //通过给刚体的 指定的方向 施加速度，得以控制角色运动
-                PlayerRigidbody.MovePosition(PlayerRigidbody.position + MainDirection * AirMoveSpeed * Time.deltaTime);
+        WeaponSliderChange();
 
-            }
+        //通过transform.TransformDirection()求出相对与物体前方方向的世界方向
 
+        //if (IsInGround)
+        //{
+        //    moveDirection = new Vector3(h, 0, v);
+        //    moveDirection = transform.TransformDirection(moveDirection);
+        //    moveDirection *= MoveSpeed;
+        //    //if (Input.GetButton("Jump"))
+        //    //    moveDirection.y = jumpSpeed;
+        //}
+        //moveDirection.y -= gravity * Time.deltaTime;
+        //controller.Move(moveDirection * Time.deltaTime);
+
+
+
+    }
+
+    public void WeaponSliderChange()
+    {
+        if (v > 0)
+        {
+            WeaponValue += MoveSpeed * Time.deltaTime*100 + ParkourValue ;
+
+        }
+        if (v == 0)
+        {
+            WeaponValue -= MoveSpeed* Time.deltaTime*500;
+        }
+
+        //StartCoroutine(SliderReturn());
+        WeaponSlider.value = WeaponValue / MaxWeaponValue;
+    }
+
+    IEnumerator SliderReturn()
+    {
+        if (v == 0)
+        {
+            yield return new WaitForSeconds(2f);
+            WeaponSlider.value = 0;
+        }
         
-            //通过transform.TransformDirection()求出相对与物体前方方向的世界方向
-            
-            
     }
 
     //位移变量
     void CharacterInput()
     {
 
-        
+
+
+        if (StopDetect.CollisonHappen && (Input.GetKey(KeyCode.W) || Input.GetKeyDown(KeyCode.W)))
+        {
+
+            Debug.Log(v);
+            MoveSpeed = 0;
+            AirMoveSpeed = 0;
+            v = 0;
+            h = Input.GetAxis("Horizontal");
+
+        }
+        else
+        {
+            h = Input.GetAxis("Horizontal");
+            v = Input.GetAxis("Vertical");
+            MoveSpeed = 5;
+            AirMoveSpeed = 6.5f;
+        }
+
+
+
 
     }
 
@@ -511,7 +609,7 @@ public class PlayerCtrl : MonoBehaviour
                 IsInGround = true;
                 //PlayerAnimator.SetFloat("LandSpeed", LandSpeed);
                 PlayerAnimator.SetBool("CanJump", false);
-                PlayerAnimator.SetBool("Fall", false);
+                HangNum = 1;
 
             }
             else
