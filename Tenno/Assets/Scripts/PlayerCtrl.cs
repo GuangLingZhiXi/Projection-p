@@ -289,7 +289,7 @@ public class PlayerCtrl : MonoBehaviour
                 ParkourEndPosition = ValutEndPosition.position;
                 CameraAnimator.CrossFade("Vault", 0.1f);
                 PlayerAnimator.SetBool("Vault", true);
-                ParkourValue = 20;
+                ParkourValue = 10;
                // PlayerAnimator.SetFloat("LandSpeed", 0);
 
             }
@@ -340,7 +340,7 @@ public class PlayerCtrl : MonoBehaviour
                 CameraAnimator.CrossFade("Climb", 0.1f);
                 //PlayerAnimator.SetFloat("LandSpeed", 0);
                 HangIdle = false;
-                ParkourValue = 30;
+                ParkourValue = 20;
 
             }
             if (Roll)
@@ -354,7 +354,7 @@ public class PlayerCtrl : MonoBehaviour
                 ParkourEndPosition = RollEndPosition.position;
                 PlayerAnimator.SetBool("Roll", true);
                 CameraAnimator.CrossFade("Roll", 0.1f);
-                ParkourValue = 40;
+                ParkourValue = 10;
                 //PlayerAnimator.SetFloat("LandSpeed", 0);
 
             }
@@ -383,7 +383,7 @@ public class PlayerCtrl : MonoBehaviour
                 PlayerAnimator.SetBool("Roll", false);
                 PlayerAnimator.SetBool("CanJump", false);
                 StartCoroutine(Landing());
-                ParkourValue = 0;
+                ParkourValue = 1;
                 //PlayerAnimator.SetBool("Hang Idle", false);
 
             }
@@ -534,28 +534,37 @@ public class PlayerCtrl : MonoBehaviour
 
     public void WeaponSliderChange()
     {
+
+        Debug.Log(WeaponSlider.value);
         if (v > 0)
         {
-            WeaponValue += MoveSpeed * Time.deltaTime*100 + ParkourValue ;
 
-        }
-        if (v == 0)
+            WeaponValue = Mathf.Clamp(WeaponValue+MoveSpeed * Time.deltaTime * ParkourValue,0, MaxWeaponValue) ;
+
+        }else if (v == 0)
         {
-            WeaponValue -= MoveSpeed* Time.deltaTime*500;
+            
+                StartCoroutine(SliderReturn());
+               
+            
+            //WeaponValue = Mathf.Clamp(WeaponValue-MoveSpeed * Time.deltaTime*10 , 0, MaxWeaponValue);
         }
 
         //StartCoroutine(SliderReturn());
         WeaponSlider.value = WeaponValue / MaxWeaponValue;
+
+        
+        
     }
 
     IEnumerator SliderReturn()
     {
-        if (v == 0)
-        {
-            yield return new WaitForSeconds(2f);
-            WeaponSlider.value = 0;
-        }
-        
+        //if (v == 0)
+       // {
+            yield return new WaitForSeconds(3f);
+        WeaponValue = Mathf.Clamp(WeaponValue - MoveSpeed * Time.deltaTime * 10, 0, MaxWeaponValue);
+        //}
+
     }
 
     //位移变量
@@ -567,7 +576,7 @@ public class PlayerCtrl : MonoBehaviour
         if (StopDetect.CollisonHappen && (Input.GetKey(KeyCode.W) || Input.GetKeyDown(KeyCode.W)))
         {
 
-            Debug.Log(v);
+           // Debug.Log(v);
             MoveSpeed = 0;
             AirMoveSpeed = 0;
             v = 0;
