@@ -19,8 +19,9 @@ public class PlayerCtrl : MonoBehaviour
     private Rigidbody PlayerRigidbody;
     private CapsuleCollider PlayerCollider;
     public Camera PlayerCamera;
-    public CharacterController controller;
+   // public CharacterController controller;
     public Slider WeaponSlider;
+    public GameObject Weapon;
 
     //位移类
     public Transform ValutEndPosition;
@@ -78,6 +79,7 @@ public class PlayerCtrl : MonoBehaviour
         Playertransform = GameObject.Find("Player").GetComponent<Transform>();
         PlayerRigidbody = GameObject.Find("Player").GetComponent<Rigidbody>();
         PlayerCollider = GetComponent<CapsuleCollider>();
+        Weapon.SetActive(false);
         //CharacterController controller = GameObject.Find("Player").GetComponent<CharacterController>();
 
         CanParkour = false;
@@ -147,6 +149,8 @@ public class PlayerCtrl : MonoBehaviour
                 GroundCheck();
 
                 StandUp();
+
+                Attack();
 
                 //各类跑酷判定
                 //翻越判定：翻越触发&&悬挂未触发&&未攀爬&&未翻越&&触地&&跑酷时间结束&&按下按键&&向前位移
@@ -535,7 +539,7 @@ public class PlayerCtrl : MonoBehaviour
     public void WeaponSliderChange()
     {
 
-        Debug.Log(WeaponSlider.value);
+        //Debug.Log(WeaponSlider.value);
         if (v > 0)
         {
 
@@ -553,18 +557,43 @@ public class PlayerCtrl : MonoBehaviour
         //StartCoroutine(SliderReturn());
         WeaponSlider.value = WeaponValue / MaxWeaponValue;
 
-        
+        if (WeaponSlider.value == 1&&! Weapon.activeSelf)
+        {
+            Debug.Log("Can Create Weapon");
+            if (Input.GetKey(KeyCode.F))
+            {
+                Debug.Log("Weapon Created ");
+                Weapon.SetActive(true);
+                WeaponValue = 0;
+                WeaponSlider.value = 0;
+            }
+        }
         
     }
 
     IEnumerator SliderReturn()
     {
-        //if (v == 0)
-       // {
-            yield return new WaitForSeconds(3f);
-        WeaponValue = Mathf.Clamp(WeaponValue - MoveSpeed * Time.deltaTime * 10, 0, MaxWeaponValue);
-        //}
 
+
+        yield return new WaitForSeconds(3f);
+
+        if (v == 0)
+        {
+        WeaponValue = Mathf.Clamp(WeaponValue - MoveSpeed * Time.deltaTime * 10, 0, MaxWeaponValue);
+        }
+
+    }
+
+    void Attack()
+    {
+        if (Weapon.activeSelf)
+        {
+            if (Input.GetMouseButton(0))
+            {
+                Debug.Log("Attack");
+                Weapon.SetActive(false);
+            }
+        }
     }
 
     //位移变量
