@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 //状态接口类
 
@@ -668,5 +669,21 @@ public class PlayerCtrl : MonoBehaviour
 
     }
 
+     void OnTriggerEnter(Collider collider)
+    {
+        if(collider.tag=="DeathPlace")
+        {
+            Debug.Log("DeathPlace");
+            StartCoroutine(Death());
+            PlayerAnimator.SetBool("Death", true);
+        }
+        
+    }
+
+    IEnumerator Death()
+    {
+        yield return new WaitForSeconds(1);
+        SceneManager.LoadScene("UI");
+    }
 }
 
